@@ -37,7 +37,7 @@ func (svc *service) UpdateAccount(input *dto.UpdateAccount) error {
 }
 
 func (svc *service) Login(input *dto.LoginInput) (string, error) {
-	account, err := svc.store.Account().Get(&model.Account{Username: input.Username, Role: input.Type})
+	account, err := svc.store.Account().Get(&model.Account{Username: input.Username})
 	if err != nil {
 		return "", model.NewErrUnauthorized("invalid username or password")
 	}

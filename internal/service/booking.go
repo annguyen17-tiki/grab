@@ -1,11 +1,13 @@
 package service
 
 import (
+	"fmt"
 	"sort"
 	"time"
 
 	"github.com/annguyen17-tiki/grab/internal/dto"
 	"github.com/annguyen17-tiki/grab/internal/model"
+	"github.com/gocraft/work"
 	"github.com/mmcloughlin/geohash"
 	"gorm.io/gorm"
 )
@@ -54,8 +56,8 @@ func (svc *service) CreateBooking(input *dto.CreateBooking) (*model.Booking, err
 			AccountID: o.DriverID,
 			Status:    model.NotificationNew,
 			Content: map[string]interface{}{
-				"title":      "New Offer",
-				"message":    "You have a new offer",
+				"title":      "Chuyến xe mới",
+				"message":    "Bạn có một yêu cầu đặt xe",
 				"booking_id": booking.ID,
 			},
 		})
@@ -63,6 +65,23 @@ func (svc *service) CreateBooking(input *dto.CreateBooking) (*model.Booking, err
 
 	if err := svc.store.Notification().Create(notifications); err != nil {
 		return nil, err
+	}
+
+	for _, o := range offers {
+		acc, err := svc.store.Account().Get(&model.Account{ID: o.DriverID})
+		if err != nil {
+			return nil, err
+		}
+
+		enqueuer := work.NewEnqueuer(model.RedisNamespace, svc.redisPool)
+		if _, err := enqueuer.Enqueue(model.FCMWorkerTopic, map[string]interface{}{
+			"account_id": acc.ID,
+			"title":      "Bác tài ơi !!",
+			"body":       fmt.Sprintf("%s ơi, có một chuyến xe gần bạn", acc.Firstname),
+			"link":       fmt.Sprintf("%s/bookings/%s", svc.cfg.WebBaseURL, booking.ID),
+		}); err != nil {
+			return nil, err
+		}
 	}
 
 	return booking, nil
@@ -168,7 +187,7 @@ func (svc *service) DoneBooking(bookingID, driverID string) error {
 }
 
 func (svc *service) GetBooking(id string) (*model.Booking, error) {
-	booking, err := svc.store.Booking().Get(&model.Booking{ID: id}, "Offers")
+	booking, err := svc.store.Booking().Get(&model.Booking{ID: id}, "User", "Driver", "Offers")
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, model.NewErrNotFound("not found booking: %s", id)
@@ -179,7 +198,7 @@ func (svc *service) GetBooking(id string) (*model.Booking, error) {
 }
 
 func (svc *service) SearchBooking(input *dto.SearchBooking) ([]*model.Booking, error) {
-	return svc.store.Booking().Search(input)
+	return svc.store.Booking().Search(input, "User", "Driver")
 }
 
 func (svc *service) confirmBookingIfAny(id string) error {

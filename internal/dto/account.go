@@ -21,5 +21,4 @@ type UpdateAccount struct {
 type LoginInput struct {
 	Username string `json:"username" validate:"min=6"`
 	Password string `json:"password" validate:"min=6"`
-	Type     string `json:"type" validate:"oneof=user driver admin"`
 }

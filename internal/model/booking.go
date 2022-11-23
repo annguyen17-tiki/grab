@@ -11,7 +11,9 @@ const (
 type Booking struct {
 	ID            string   `json:"id"`
 	UserID        string   `json:"user_id"`
+	User          *Account `json:"user"`
 	DriverID      *string  `json:"driver_id,omitempty"`
+	Driver        *Account `json:"driver"`
 	Vehicle       *string  `json:"vehicle,omitempty"`
 	FromLatitude  float64  `json:"from_latitude"`
 	FromLongitude float64  `json:"from_longitude"`

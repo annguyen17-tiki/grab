@@ -22,6 +22,7 @@ type IStore interface {
 	Location() ILocationStore
 	Booking() IBookingStore
 	Notification() INotificationStore
+	Token() ITokenStore
 }
 
 type Store struct {
@@ -140,4 +141,8 @@ func (s Store) Booking() IBookingStore {
 
 func (s Store) Notification() INotificationStore {
 	return notificationStore{s}
+}
+
+func (s Store) Token() ITokenStore {
+	return tokenStore{s}
 }

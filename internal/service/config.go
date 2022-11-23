@@ -14,6 +14,9 @@ type Config struct {
 	MaxOffersPerBooking         int           `default:"5" split_words:"true"`
 	BookingTimeout              time.Duration `default:"1m" split_words:"true"`
 	CheckBookingTimeoutInterval time.Duration `default:"5s" split_words:"true"`
+	RedisURL                    string        `default:"localhost:6379" split_words:"true"`
+	RedisPassword               string        `default:"" split_words:"true"`
+	WebBaseURL                  string        `default:"http://localhost:3000" split_words:"true"`
 }
 
 func loadConfig() (*Config, error) {

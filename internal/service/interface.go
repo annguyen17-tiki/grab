@@ -24,4 +24,6 @@ type IService interface {
 
 	SearchNotifications(input *dto.SearchNotification) ([]*model.Notification, error)
 	SeenNotification(accountID, notificationID string) error
+
+	SaveToken(accountID, token string) error
 }

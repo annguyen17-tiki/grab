@@ -34,8 +34,9 @@ func New() (*gin.Engine, error) {
 	login.Use(authenticate)
 
 	login.GET("/accounts/me", getOwnAccount(svc))
-	login.PUT("/accounts/info", updateAccount(svc))
+	login.PUT("/accounts", updateAccount(svc))
 
+	login.POST("/tokens", saveToken(svc))
 	login.POST("/locations", requireRole(svc, model.RoleDriver), saveLocation(svc))
 	login.POST("/bookings", requireRole(svc, model.RoleUser), createBooking(svc))
 	login.POST("/bookings/:booking_id/accept", requireRole(svc, model.RoleDriver), acceptBooking(svc))

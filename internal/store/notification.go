@@ -16,6 +16,9 @@ type notificationStore struct {
 }
 
 func (s notificationStore) Create(ns []*model.Notification) error {
+	if len(ns) == 0 {
+		return nil
+	}
 	return s.db.Model(&model.Notification{}).Create(&ns).Error
 }
 

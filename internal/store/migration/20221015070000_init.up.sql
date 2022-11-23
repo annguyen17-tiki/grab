@@ -88,3 +88,16 @@ create table if not exists "notifications" (
     primary key ("id"),
     constraint "fk_notifications_account_id" foreign key ("account_id") references "accounts"("id")
 );
+
+create table if not exists "tokens" (
+    "account_id" uuid not null,
+    "token" text not null,
+
+    "created_at" timestamp not null,
+    "updated_at" timestamp not null,
+    "deleted_at" timestamp,
+
+    primary key ("account_id"),
+    constraint "fk_tokens_account_id" foreign key ("account_id") references "accounts"("id")
+
+)
