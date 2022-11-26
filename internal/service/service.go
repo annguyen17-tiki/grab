@@ -40,7 +40,7 @@ func New() (IService, error) {
 			MaxIdle:   5,
 			Wait:      true,
 			Dial: func() (redis.Conn, error) {
-				return redis.Dial("tcp", cfg.RedisURL, redis.DialPassword(cfg.RedisPassword))
+				return redis.Dial("tcp", fmt.Sprintf("%s:%d", cfg.RedisURL, cfg.RedisPort), redis.DialPassword(cfg.RedisPassword))
 			},
 		},
 	}

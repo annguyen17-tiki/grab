@@ -17,8 +17,10 @@ type Booking struct {
 	Vehicle       *string  `json:"vehicle,omitempty"`
 	FromLatitude  float64  `json:"from_latitude"`
 	FromLongitude float64  `json:"from_longitude"`
+	FromAddress   string   `json:"from_address"`
 	ToLatitude    float64  `json:"to_latitude"`
 	ToLongitude   float64  `json:"to_longitude"`
+	ToAddress     string   `json:"to_address"`
 	Status        string   `json:"status"`
 	Offers        []*Offer `json:"offers"`
 	Trackers

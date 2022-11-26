@@ -13,6 +13,7 @@ type IService interface {
 	GetAccountByPhone(phone string) (*model.Account, error)
 
 	SaveLocation(input *dto.SaveLocation) error
+	GetLocation(accountID string) (*model.Location, error)
 	NearestLocations(input *dto.NearestLocations) ([]*model.Location, error)
 
 	CreateBooking(input *dto.CreateBooking) (*model.Booking, error)

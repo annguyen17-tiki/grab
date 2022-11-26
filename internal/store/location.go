@@ -8,6 +8,7 @@ import (
 
 type ILocationStore interface {
 	Save(l *model.Location) error
+	Get(l *model.Location) (*model.Location, error)
 	Search(conditions *dto.SearchLocations, preloaders ...string) ([]*model.Location, error)
 }
 
@@ -22,6 +23,14 @@ func (s locationStore) Save(l *model.Location) error {
 	}
 
 	return s.db.Clauses(c).Model(&model.Location{}).Create(l).Error
+}
+
+func (s locationStore) Get(l *model.Location) (*model.Location, error) {
+	if err := s.db.Model(&model.Location{}).Where(l).Take(l).Error; err != nil {
+		return nil, err
+	}
+
+	return l, nil
 }
 
 func (s locationStore) Search(conditions *dto.SearchLocations, preloaders ...string) ([]*model.Location, error) {

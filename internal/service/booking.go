@@ -1,13 +1,11 @@
 package service
 
 import (
-	"fmt"
 	"sort"
 	"time"
 
 	"github.com/annguyen17-tiki/grab/internal/dto"
 	"github.com/annguyen17-tiki/grab/internal/model"
-	"github.com/gocraft/work"
 	"github.com/mmcloughlin/geohash"
 	"gorm.io/gorm"
 )
@@ -28,20 +26,25 @@ func (svc *service) CreateBooking(input *dto.CreateBooking) (*model.Booking, err
 	})
 
 	var offers []*model.Offer
+	var driverIDs []string
+
 	for i, location := range locations {
 		if i >= svc.cfg.MaxOffersPerBooking {
 			break
 		}
 
 		offers = append(offers, &model.Offer{DriverID: location.AccountID, Status: model.OfferNew})
+		driverIDs = append(driverIDs, location.AccountID)
 	}
 
 	booking := &model.Booking{
 		UserID:        input.UserID,
 		FromLatitude:  input.FromLatitude,
 		FromLongitude: input.ToLongitude,
+		FromAddress:   input.FromAddress,
 		ToLatitude:    input.ToLatitude,
 		ToLongitude:   input.FromLongitude,
+		ToAddress:     input.ToAddress,
 		Status:        model.BookingNew,
 		Offers:        offers,
 	}
@@ -50,38 +53,13 @@ func (svc *service) CreateBooking(input *dto.CreateBooking) (*model.Booking, err
 		return nil, err
 	}
 
-	var notifications []*model.Notification
-	for _, o := range booking.Offers {
-		notifications = append(notifications, &model.Notification{
-			AccountID: o.DriverID,
-			Status:    model.NotificationNew,
-			Content: map[string]interface{}{
-				"title":      "Chuyến xe mới",
-				"message":    "Bạn có một yêu cầu đặt xe",
-				"booking_id": booking.ID,
-			},
-		})
-	}
-
-	if err := svc.store.Notification().Create(notifications); err != nil {
+	drivers, err := svc.store.Account().Search(driverIDs)
+	if err != nil {
 		return nil, err
 	}
 
-	for _, o := range offers {
-		acc, err := svc.store.Account().Get(&model.Account{ID: o.DriverID})
-		if err != nil {
-			return nil, err
-		}
-
-		enqueuer := work.NewEnqueuer(model.RedisNamespace, svc.redisPool)
-		if _, err := enqueuer.Enqueue(model.FCMWorkerTopic, map[string]interface{}{
-			"account_id": acc.ID,
-			"title":      "Bác tài ơi !!",
-			"body":       fmt.Sprintf("%s ơi, có một chuyến xe gần bạn", acc.Firstname),
-			"link":       fmt.Sprintf("%s/bookings/%s", svc.cfg.WebBaseURL, booking.ID),
-		}); err != nil {
-			return nil, err
-		}
+	if err := svc.notifyNewBookingToDrivers(booking, drivers); err != nil {
+		return nil, err
 	}
 
 	return booking, nil
@@ -162,7 +140,7 @@ func (svc *service) RejectBooking(bookingID, driverID string) error {
 }
 
 func (svc *service) DoneBooking(bookingID, driverID string) error {
-	booking, err := svc.store.Booking().Get(&model.Booking{ID: bookingID}, "Offers")
+	booking, err := svc.store.Booking().Get(&model.Booking{ID: bookingID}, "Offers", "User", "Driver")
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return model.NewErrBadRequest("invalid booking id: %s", bookingID)
@@ -183,7 +161,11 @@ func (svc *service) DoneBooking(bookingID, driverID string) error {
 		return nil
 	}
 
-	return svc.store.Booking().Done(bookingID)
+	if err := svc.store.Booking().Done(bookingID); err != nil {
+		return err
+	}
+
+	return svc.notifyDoneBookingToUserAndDriver(booking, booking.User, booking.Driver)
 }
 
 func (svc *service) GetBooking(id string) (*model.Booking, error) {
@@ -202,7 +184,7 @@ func (svc *service) SearchBooking(input *dto.SearchBooking) ([]*model.Booking, e
 }
 
 func (svc *service) confirmBookingIfAny(id string) error {
-	booking, err := svc.store.Booking().Get(&model.Booking{ID: id}, "Offers")
+	booking, err := svc.store.Booking().Get(&model.Booking{ID: id}, "Offers", "User")
 	if err != nil {
 		return err
 	}
@@ -227,14 +209,22 @@ func (svc *service) confirmBookingIfAny(id string) error {
 			return nil
 		}
 
-		return svc.store.Booking().Timeout(booking.ID)
+		if err := svc.store.Booking().Timeout(booking.ID); err != nil {
+			return err
+		}
+
+		return svc.notifyTimeoutBookingToUser(booking, booking.User)
 	}
 
-	locations, err := svc.store.Location().Search(&dto.SearchLocations{AccountIDs: driverIDs})
+	locations, err := svc.store.Location().Search(&dto.SearchLocations{AccountIDs: driverIDs}, "Account")
 	if err != nil {
 		return err
 	}
 
 	location := booking.NearestDriverLocation(locations)
-	return svc.store.Booking().Confirm(booking.ID, location.AccountID)
+	if err := svc.store.Booking().Confirm(booking.ID, location.AccountID); err != nil {
+		return err
+	}
+
+	return svc.notifyConfirmBookingToUser(booking, booking.User, location.Account)
 }

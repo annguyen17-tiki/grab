@@ -3,11 +3,13 @@ package model
 import "math"
 
 type Location struct {
-	AccountID string  `json:"account_id" gorm:"primaryKey"`
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
-	GeoHash   string  `json:"-"`
-	Driver    *Driver `json:"driver" gorm:"foreignKey:AccountID"`
+	AccountID string   `json:"account_id" gorm:"primaryKey"`
+	Account   *Account `json:"-"`
+	Latitude  float64  `json:"latitude"`
+	Longitude float64  `json:"longitude"`
+	Address   string   `json:"address"`
+	GeoHash   string   `json:"-"`
+	Driver    *Driver  `json:"driver" gorm:"foreignKey:AccountID"`
 	Trackers
 }
 

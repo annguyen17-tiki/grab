@@ -4,6 +4,7 @@ type SaveLocation struct {
 	AccountID string  `json:"-"`
 	Longitude float64 `json:"longitude" validate:"required"`
 	Latitude  float64 `json:"latitude" validate:"required"`
+	Address   string  `json:"address" validate:"-"`
 }
 
 type SearchLocations struct {

@@ -34,6 +34,7 @@ func New() (*gin.Engine, error) {
 	login.Use(authenticate)
 
 	login.GET("/accounts/me", getOwnAccount(svc))
+	login.GET("/locations/me", getOwnLocation(svc))
 	login.PUT("/accounts", updateAccount(svc))
 
 	login.POST("/tokens", saveToken(svc))

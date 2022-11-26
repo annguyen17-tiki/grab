@@ -15,7 +15,7 @@ func (svc *service) startJob() {
 func (svc *service) checkBookingStatus() {
 	for {
 		status := model.BookingNew
-		bookings, err := svc.store.Booking().Search(&dto.SearchBooking{Status: &status}, "Offers")
+		bookings, err := svc.store.Booking().Search(&dto.SearchBooking{Status: &status}, "Offers", "User")
 		if err != nil {
 			fmt.Printf("failed to search bookings, err: %v", err)
 		}
@@ -29,6 +29,12 @@ func (svc *service) checkBookingStatus() {
 
 				if err := svc.store.Booking().Timeout(booking.ID); err != nil {
 					fmt.Printf("failed to timeout booking, err: %v", err)
+					continue
+				}
+
+				if err := svc.notifyTimeoutBookingToUser(booking, booking.User); err != nil {
+					fmt.Printf("failed to notify booking timeout, err: %v", err)
+					continue
 				}
 
 				continue
@@ -39,7 +45,7 @@ func (svc *service) checkBookingStatus() {
 				driverIDs = append(driverIDs, offer.DriverID)
 			}
 
-			locations, err := svc.store.Location().Search(&dto.SearchLocations{AccountIDs: driverIDs})
+			locations, err := svc.store.Location().Search(&dto.SearchLocations{AccountIDs: driverIDs}, "Account")
 			if err != nil {
 				fmt.Printf("failed to search driver locations, err: %v", err)
 			}
@@ -47,6 +53,10 @@ func (svc *service) checkBookingStatus() {
 			location := booking.NearestDriverLocation(locations)
 			if err := svc.store.Booking().Confirm(booking.ID, location.AccountID); err != nil {
 				fmt.Printf("failed to confirm booking, err: %v", err)
+			}
+
+			if err := svc.notifyConfirmBookingToUser(booking, booking.User, location.Account); err != nil {
+				fmt.Printf("failed to notify booking confirmation, err: %v", err)
 			}
 		}
 

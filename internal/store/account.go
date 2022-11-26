@@ -8,6 +8,7 @@ type IAccountStore interface {
 	Create(a *model.Account) error
 	Update(a *model.Account) error
 	Get(a *model.Account, preloaders ...string) (*model.Account, error)
+	Search(ids []string) ([]*model.Account, error)
 }
 
 type accountStore struct {
@@ -33,4 +34,13 @@ func (s accountStore) Get(a *model.Account, preloaders ...string) (*model.Accoun
 	}
 
 	return a, nil
+}
+
+func (s accountStore) Search(ids []string) ([]*model.Account, error) {
+	var accounts []*model.Account
+	if err := s.db.Model(&model.Account{}).Where("id IN (?)", ids).Find(&accounts).Error; err != nil {
+		return nil, err
+	}
+
+	return accounts, nil
 }

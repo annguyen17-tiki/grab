@@ -7,6 +7,7 @@ import (
 	"github.com/annguyen17-tiki/grab/internal/model"
 	"github.com/jinzhu/copier"
 	"github.com/mmcloughlin/geohash"
+	"gorm.io/gorm"
 )
 
 func (svc *service) SaveLocation(input *dto.SaveLocation) error {
@@ -17,6 +18,17 @@ func (svc *service) SaveLocation(input *dto.SaveLocation) error {
 
 	location.GeoHash = geohash.EncodeWithPrecision(location.Latitude, location.Longitude, svc.cfg.GeoHashPrecision)
 	return svc.store.Location().Save(&location)
+}
+
+func (svc *service) GetLocation(accountID string) (*model.Location, error) {
+	location, err := svc.store.Location().Get(&model.Location{AccountID: accountID})
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, model.NewErrNotFound("not found location for account: %s", accountID)
+		}
+	}
+
+	return location, nil
 }
 
 func (svc *service) NearestLocations(input *dto.NearestLocations) ([]*model.Location, error) {

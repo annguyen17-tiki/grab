@@ -35,6 +35,24 @@ func saveLocation(svc service.IService) gin.HandlerFunc {
 	}
 }
 
+func getOwnLocation(svc service.IService) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		accountID, err := getAccountID(ctx)
+		if err != nil {
+			renderError(ctx, model.NewErrUnauthorized("unauthorized user"))
+			return
+		}
+
+		location, err := svc.GetLocation(accountID)
+		if err != nil {
+			renderError(ctx, err)
+			return
+		}
+
+		renderData(ctx, location)
+	}
+}
+
 func nearestLocations(svc service.IService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var queries dto.NearestLocations

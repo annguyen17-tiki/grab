@@ -7,8 +7,10 @@ type CreateBooking struct {
 	Vehicles      []string `json:"vehicle" validate:"omitempty,gt=0,unique,dive,oneof=motor car4 car7"`
 	FromLatitude  float64  `json:"from_latitude" validate:"required"`
 	FromLongitude float64  `json:"from_longitude" validate:"required"`
+	FromAddress   string   `json:"from_address" validate:"-"`
 	ToLatitude    float64  `json:"to_latitude" validate:"required"`
 	ToLongitude   float64  `json:"to_longitude" validate:"required"`
+	ToAddress     string   `json:"to_address" validate:"-"`
 }
 
 type SearchBooking struct {
