@@ -27,7 +27,7 @@ func New() (*gin.Engine, error) {
 	setCORS(router)
 
 	unauthorized := router.Group("/")
-	unauthorized.POST("/register", createAccount(svc))
+	unauthorized.POST("/accounts", createAccount(svc))
 	unauthorized.POST("/accounts/login", login(svc))
 
 	login := router.Group("/")

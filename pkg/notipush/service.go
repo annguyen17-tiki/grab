@@ -25,7 +25,12 @@ func New() (IService, error) {
 	svc.conf = conf
 
 	ctx := context.Background()
-	app, err := firebase.NewApp(ctx, nil, option.WithCredentialsJSON([]byte(svc.conf.GoogleCredentials)))
+	opt := option.WithCredentialsFile(svc.conf.CredentialsFile)
+	if svc.conf.CredentialsFile == "" {
+		opt = option.WithCredentialsJSON(svc.conf.GoogleCredentials)
+	}
+
+	app, err := firebase.NewApp(ctx, nil, opt)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing app: %v", err)
 	}
