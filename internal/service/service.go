@@ -6,7 +6,6 @@ import (
 	"github.com/annguyen17-tiki/grab/internal/store"
 	"github.com/annguyen17-tiki/grab/pkg/notipush"
 	"github.com/gomodule/redigo/redis"
-	"google.golang.org/grpc/internal/resolver"
 )
 
 type service struct {
@@ -32,7 +31,6 @@ func New() (IService, error) {
 		return nil, fmt.Errorf("failed to init FCM, err: %v", err)
 	}
 
-	redis.
 	svc := &service{
 		store:    s,
 		notipush: n,
@@ -42,7 +40,7 @@ func New() (IService, error) {
 			MaxIdle:   5,
 			Wait:      true,
 			Dial: func() (redis.Conn, error) {
-				return redis.Dial("tcp", cfg.RedisURL, redis.DialPassword(cfg.RedisPassword), redis.DialTLSSkipVerify(true))
+				return redis.DialURL(cfg.RedisURL, redis.DialTLSSkipVerify(true))
 			},
 		},
 	}
