@@ -7,7 +7,7 @@ import (
 )
 
 type config struct {
-	CredentialsFile   string `split_words:"true" default:"./.secret/grab-tkpmnc-ffa71fe7a8d8.json"`
+	CredentialsFile   string `split_words:"true"`
 	GoogleCredentials []byte `split_words:"true"`
 }
 
