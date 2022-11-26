@@ -120,7 +120,7 @@ func (svc *service) notifyDoneBookingToUserAndDriver(booking *model.Booking, use
 			},
 		},
 		{
-			AccountID: user.ID,
+			AccountID: driver.ID,
 			Status:    model.NotificationNew,
 			Content: map[string]interface{}{
 				"title":      "Hoàn thành chuyến đi",
